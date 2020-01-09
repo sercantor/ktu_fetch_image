@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
-
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_image/network.dart';
 
 class NumberForm extends StatefulWidget {
@@ -12,14 +15,17 @@ class NumberForm extends StatefulWidget {
 }
 
 class _NumberFormState extends State<NumberForm> {
-  TextEditingController numberController = TextEditingController();
-  List<int> numberValue;
-  var linkString;
+  TextEditingController lowerNumberController = TextEditingController();
+  TextEditingController upperNumberController = TextEditingController();
+  List<int> encodeList;
+  List<Digest> linkString = List<Digest>();
   bool isPressed = false;
+  List<int> valuesList = List<int>();
 
   @override
   void dispose() {
-    numberController.dispose();
+    lowerNumberController.dispose();
+    upperNumberController.dispose();
     super.dispose();
   }
 
@@ -30,10 +36,24 @@ class _NumberFormState extends State<NumberForm> {
         Container(
           padding: EdgeInsets.all(12.0),
           child: TextFormField(
-            controller: numberController,
+            maxLength: 6,
+            controller: lowerNumberController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-                labelText: 'Numarani gir', border: OutlineInputBorder()),
+                labelText: 'Alt aralik', border: OutlineInputBorder()),
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.all(12.0),
+          child: TextFormField(
+            maxLength: 6,
+            controller: upperNumberController,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              WhitelistingTextInputFormatter.digitsOnly
+            ],
+            decoration: InputDecoration(
+                labelText: 'Ust aralik', border: OutlineInputBorder()),
           ),
         ),
         Container(
@@ -41,21 +61,61 @@ class _NumberFormState extends State<NumberForm> {
           child: RaisedButton(
             child: Text('Resmini goster'),
             onPressed: () {
-              setState(() {
-                numberValue = utf8.encode(numberController.text);
-                linkString = md5.convert(numberValue);
-                isPressed = true;
-              });
+              //text in controll can be nothing but integer, so this is ok to do
+              if (int.parse(lowerNumberController.text) <
+                  int.parse(upperNumberController.text)) {
+                setState(() {
+                  linkString.clear();
+                  valuesList.clear();
+                  //formatter messes this up so it's not readable, its basically dx of upper and lower value
+                  for (int i = 0;
+                      i <
+                          (int.parse(upperNumberController.text) -
+                              int.parse(lowerNumberController.text));
+                      i++) {
+                    valuesList.add(int.parse(lowerNumberController.text) + i);
+                    encodeList = utf8.encode(valuesList[i].toString());
+                    linkString.add(md5.convert(encodeList));
+                  }
+                  isPressed = true;
+                });
+              } else {
+                Fluttertoast.showToast(
+                    msg: "Ust aralik alt araliktan kucuk olamaz",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                    timeInSecForIos: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0);
+              }
             },
           ),
         ),
+        //add container here, for padding
         Visibility(
           visible: isPressed,
-          child: Container(
-            padding: EdgeInsets.all(6.0),
-            child: Image(
-              image: NetworkImageWithRetry(
-                  'http://bis.ktu.edu.tr/personel/$linkString.jpg'),
+          child: Expanded(
+            //otherwise gridview doesn't show up in column
+            child: GridView.count(
+              crossAxisCount: 3,
+              children: List.generate(
+                linkString.length,
+                (index) {
+                  //generate a list of containers that have the image
+                  return Container(
+                      child: PhotoViewGallery.builder(
+                    scrollPhysics: const BouncingScrollPhysics(),
+                    builder: (BuildContext context, int index) {
+                      return PhotoViewGalleryPageOptions(
+                        imageProvider: NetworkImageWithRetry(
+                            'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                      );
+                    },
+                    itemCount: linkString.length,
+                  ));
+                },
+              ),
             ),
           ),
         )
