@@ -21,6 +21,7 @@ class _NumberFormState extends State<NumberForm> {
   List<Digest> linkString = List<Digest>();
   bool isPressed = false;
   List<int> valuesList = List<int>();
+  double _updatedScale = 1.0;
 
   @override
   void dispose() {
@@ -103,17 +104,32 @@ class _NumberFormState extends State<NumberForm> {
                 linkString.length,
                 (index) {
                   //generate a list of containers that have the image
-                  return Container(
-                      child: PhotoViewGallery.builder(
-                    scrollPhysics: const BouncingScrollPhysics(),
-                    builder: (BuildContext context, int index) {
-                      return PhotoViewGalleryPageOptions(
-                        imageProvider: NetworkImageWithRetry(
-                            'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                  //'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                  return InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext context) {
+                            return PhotoView(
+                              imageProvider: NetworkImageWithRetry(
+                                  'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                                  heroAttributes: PhotoViewHeroAttributes(tag: 'tag', ),
+                            );
+                          },
+                        ),
                       );
                     },
-                    itemCount: linkString.length,
-                  ));
+                    child: Container(
+                      padding: EdgeInsets.all(5.0),
+                      child: Hero(
+                        tag: 'tag$index',
+                        child: Image(
+                          image: NetworkImageWithRetry(
+                              'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                        ),
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -122,4 +138,5 @@ class _NumberFormState extends State<NumberForm> {
       ],
     );
   }
+
 }
