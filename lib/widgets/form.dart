@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_image/network.dart';
 
 class NumberForm extends StatefulWidget {
@@ -21,13 +20,22 @@ class _NumberFormState extends State<NumberForm> {
   List<Digest> linkString = List<Digest>();
   bool isPressed = false;
   List<int> valuesList = List<int>();
-  double _updatedScale = 1.0;
-
+  FocusNode _focusNodeLower = FocusNode();
+  FocusNode _focusNodeUpper = FocusNode();
   @override
   void dispose() {
     lowerNumberController.dispose();
     upperNumberController.dispose();
+    _focusNodeLower.dispose();
+    _focusNodeUpper.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    _focusNodeLower.addListener((){});
+    _focusNodeUpper.addListener((){});
+    super.initState();
   }
 
   @override
@@ -38,8 +46,11 @@ class _NumberFormState extends State<NumberForm> {
           padding: EdgeInsets.all(12.0),
           child: TextFormField(
             maxLength: 6,
+            autofocus: false,
+            maxLengthEnforced: true,
             controller: lowerNumberController,
             keyboardType: TextInputType.number,
+            focusNode: _focusNodeLower,
             decoration: InputDecoration(
                 labelText: 'Alt aralik', border: OutlineInputBorder()),
           ),
@@ -47,8 +58,11 @@ class _NumberFormState extends State<NumberForm> {
         Container(
           padding: EdgeInsets.all(12.0),
           child: TextFormField(
+            autofocus: false,
+            maxLengthEnforced: true,
             maxLength: 6,
             controller: upperNumberController,
+            focusNode: _focusNodeUpper,
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>[
               WhitelistingTextInputFormatter.digitsOnly
@@ -62,6 +76,10 @@ class _NumberFormState extends State<NumberForm> {
           child: RaisedButton(
             child: Text('Resmini goster'),
             onPressed: () {
+              setState(() {
+               _focusNodeLower.unfocus();
+               _focusNodeUpper.unfocus();
+              });
               //text in controll can be nothing but integer, so this is ok to do
               if (int.parse(lowerNumberController.text) <
                   int.parse(upperNumberController.text)) {
@@ -104,7 +122,6 @@ class _NumberFormState extends State<NumberForm> {
                 linkString.length,
                 (index) {
                   //generate a list of containers that have the image
-                  //'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
                   return InkWell(
                     onTap: () {
                       Navigator.of(context).push(
@@ -113,7 +130,9 @@ class _NumberFormState extends State<NumberForm> {
                             return PhotoView(
                               imageProvider: NetworkImageWithRetry(
                                   'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
-                                  heroAttributes: PhotoViewHeroAttributes(tag: 'tag', ),
+                              heroAttributes: PhotoViewHeroAttributes(
+                                tag: 'tag$index',
+                              ),
                             );
                           },
                         ),
@@ -138,5 +157,4 @@ class _NumberFormState extends State<NumberForm> {
       ],
     );
   }
-
 }
