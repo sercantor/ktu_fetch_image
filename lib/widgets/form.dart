@@ -33,8 +33,8 @@ class _NumberFormState extends State<NumberForm> {
 
   @override
   void initState() {
-    _focusNodeLower.addListener((){});
-    _focusNodeUpper.addListener((){});
+    _focusNodeLower.addListener(() {});
+    _focusNodeUpper.addListener(() {});
     super.initState();
   }
 
@@ -76,10 +76,7 @@ class _NumberFormState extends State<NumberForm> {
           child: RaisedButton(
             child: Text('Resmini goster'),
             onPressed: () {
-              setState(() {
-               _focusNodeLower.unfocus();
-               _focusNodeUpper.unfocus();
-              });
+              _unFocusNodes();
               //text in controll can be nothing but integer, so this is ok to do
               if (int.parse(lowerNumberController.text) <
                   int.parse(upperNumberController.text)) {
@@ -124,6 +121,7 @@ class _NumberFormState extends State<NumberForm> {
                   //generate a list of containers that have the image
                   return InkWell(
                     onTap: () {
+                      _unFocusNodes();
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (BuildContext context) {
@@ -144,7 +142,8 @@ class _NumberFormState extends State<NumberForm> {
                         tag: 'tag$index',
                         child: Image(
                           image: NetworkImageWithRetry(
-                              'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                            'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg',
+                          ),
                         ),
                       ),
                     ),
@@ -156,5 +155,12 @@ class _NumberFormState extends State<NumberForm> {
         )
       ],
     );
+  }
+
+  void _unFocusNodes() {
+    setState(() {
+      _focusNodeLower.unfocus();
+      _focusNodeUpper.unfocus();
+    });
   }
 }
