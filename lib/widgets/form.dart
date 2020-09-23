@@ -5,6 +5,9 @@ import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:flutter_image/network.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NumberForm extends StatefulWidget {
   NumberForm({Key key}) : super(key: key);
@@ -68,7 +71,9 @@ class _NumberFormState extends State<NumberForm> {
               WhitelistingTextInputFormatter.digitsOnly
             ],
             decoration: InputDecoration(
-                labelText: 'Ust aralik', border: OutlineInputBorder()),
+              labelText: 'Ust aralik',
+              border: OutlineInputBorder(),
+            ),
           ),
         ),
         Container(
@@ -125,13 +130,45 @@ class _NumberFormState extends State<NumberForm> {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (BuildContext context) {
-                            return PhotoView(
-                              imageProvider: NetworkImageWithRetry(
-                                  'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
-                              heroAttributes: PhotoViewHeroAttributes(
-                                tag: 'tag$index',
+                            return Stack(children: [
+                              PhotoView(
+                                imageProvider: NetworkImageWithRetry(
+                                    'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg'),
+                                heroAttributes: PhotoViewHeroAttributes(
+                                  tag: 'tag$index',
+                                ),
                               ),
-                            );
+                              Container(
+                                padding: EdgeInsets.only(top: 50.0),
+                                alignment: Alignment.topRight,
+                                child: FlatButton(
+                                  child: Icon(
+                                    Icons.arrow_downward,
+                                    color: Colors.grey,
+                                    size: 35.0,
+                                  ),
+                                  onPressed: () async {
+                                    final status =
+                                        await Permission.storage.request();
+
+                                    if (status.isGranted) {
+                                      final downloadDir =
+                                          await getExternalStorageDirectory();
+                                      print(downloadDir);
+                                      final id =
+                                          await FlutterDownloader.enqueue(
+                                        url:
+                                            'http://bis.ktu.edu.tr/personel/${linkString[index]}.jpg',
+                                        savedDir: downloadDir.path,
+                                        fileName: '${linkString[index]}',
+                                        showNotification: true,
+                                        openFileFromNotification: true,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                            ]);
                           },
                         ),
                       );
